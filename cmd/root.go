@@ -2,9 +2,11 @@ package cmd
 
 import (
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/pmaene/p1_exporter/internal"
 	"github.com/prometheus/client_golang/prometheus"
@@ -21,11 +23,12 @@ var (
 )
 
 var (
-	listenAddress string
-	metricsPath   string
-	p1USBDevice   string
-	p1Baudrate    int
-	p1Timeout     int
+	listenAddress     string
+	metricsPath       string
+	readHeaderTimeout time.Duration
+	p1USBDevice       string
+	p1Baudrate        int
+	p1Timeout         int
 
 	rootCmd = &cobra.Command{
 		Use:          "p1_exporter",
@@ -82,6 +85,13 @@ func init() {
 		"web.telemetry-path",
 		"/metrics",
 		"path under which to expose metrics",
+	)
+
+	rootCmd.Flags().DurationVar(
+		&readHeaderTimeout,
+		"web.read-header-timeout",
+		5*time.Second,
+		"timeout for reading request headers",
 	)
 
 	rootCmd.Flags().StringVar(
@@ -164,8 +174,21 @@ func runRoot(cmd *cobra.Command, args []string) {
 		}
 	})
 
+	srv := http.Server{
+		ReadHeaderTimeout: viper.GetDuration("web.read-header-timeout"),
+	}
+
+	lst, err := net.Listen(
+		"tcp",
+		viper.GetString("web.listen-address"),
+	)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	log.Infoln("listening on", viper.GetString("web.listen-address"))
-	if err := http.ListenAndServe(viper.GetString("web.listen-address"), nil); err != nil {
+	if err := srv.Serve(lst); err != nil {
 		log.Fatal(err)
 	}
 }
