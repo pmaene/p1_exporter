@@ -6,7 +6,7 @@ require (
 	github.com/prometheus/client_golang v1.11.1
 	github.com/prometheus/common v0.26.0
 	github.com/skoef/gop1 v0.0.0-20210203174758-a1afce89f552
-	github.com/spf13/cobra v1.7.0
+	github.com/spf13/cobra v1.8.1
 	github.com/spf13/viper v1.16.0
 )
 
